@@ -2,12 +2,15 @@
   <section class="container">
     <div class="row">
       <div class="col-md-6 offset-md-3">
-        <h1 class="display-4 text-center m-4">MovieSolver</h1>
-        <p class="lead text-center">Use letterboxd to find a movie you all want to see!</p>
+        <h1 class="display-4 text-center m-4">LetterSection</h1>
+        <p class="lead text-center">
+          Use
+          <a href="http://letterboxd.com">letterboxd</a> to find a movie that everyone's excited about.
+        </p>
       </div>
     </div>
     <div class="row">
-      <div class="col-md-3">
+      <div class="col-lg-4 col-md-6">
         <form @submit.prevent="search()">
           <input
             type="text"
@@ -52,7 +55,7 @@
           >
         </form>
       </div>
-      <div class="col-md-9">
+      <div class="col-md-6 col-lg-8">
         <h1 v-if="results.length > 0" class="ml-5">Results</h1>
         <div class="container">
           <ul>
