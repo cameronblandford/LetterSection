@@ -1,7 +1,7 @@
 {
-  "name": "lettervenn",
+  "name": "lettersection",
   "version": "1.0.0",
-  "description": "A letterboxd-api-consuming app for figuring out what movie to watch with your friends.",
+  "description": "A letterboxd API-consuming app for figuring out what movie to watch with your friends.",
   "author": "Cameron Blandford",
   "private": true,
   "scripts": {
