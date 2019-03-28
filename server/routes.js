@@ -11,6 +11,27 @@ router.get('/', function(req, res) {
   res.json({ message: '<3' })
 })
 
+function createUrl(uid, cursor = null) {
+  const method = 'GET'
+  const apiKey = process.env.API_KEY
+  const apiSecret = process.env.API_SECRET
+  const requestURL = `https://api.letterboxd.com/api/v0/member/${uid}/watchlist`
+
+  const secondsSinceEpoch = Math.round(new Date().getTime() / 1000)
+  const nonceUUID = uuid()
+  let urlString = `${requestURL}?perPage=100&apikey=${apiKey}&nonce=${nonceUUID}&timestamp=${secondsSinceEpoch}`
+  if (cursor) {
+    urlString += `&cursor=${cursor}`
+  }
+  const saltedString = `${method}\u0000${urlString}\u0000`
+  const apiSignature = crypto
+    .createHmac('sha256', apiSecret)
+    .update(saltedString)
+    .digest('hex')
+  const finalUrl = `${urlString}&signature=${apiSignature}`
+  return finalUrl
+}
+
 router.get('/check', async (req, res) => {
   let intersection
 
@@ -22,30 +43,25 @@ router.get('/check', async (req, res) => {
       let u = usernames[i]
       const headUrl = `https://letterboxd.com/${u}`
       let headResults = await axios.head(headUrl)
-      debugger
       let uid = headResults.headers['x-letterboxd-identifier']
-      console.log(`User ID: ${uid}`)
-      const method = 'GET'
-      const apiKey = process.env.API_KEY
-      const apiSecret = process.env.API_SECRET
-      const requestURL = `https://api.letterboxd.com/api/v0/member/${uid}/watchlist`
-
-      const secondsSinceEpoch = Math.round(new Date().getTime() / 1000)
-      const nonceUUID = uuid()
-      console.log(`NONCE: ${nonceUUID}`)
-      const urlString = `${requestURL}?perPage=100&apikey=${apiKey}&nonce=${nonceUUID}&timestamp=${secondsSinceEpoch}`
-      const saltedString = `${method}\u0000${urlString}\u0000`
-      const apiSignature = crypto
-        .createHmac('sha256', apiSecret)
-        .update(saltedString)
-        .digest('hex')
       try {
-        let results = await axios.get(`${urlString}&signature=${apiSignature}`)
-        console.log(`UID: ${uid}`)
-        console.log(`WATCHLIST:`)
-        console.log(JSON.stringify(results.data, null, 2))
-        resultsList.push(results.data.items)
-        intersection = _.intersectionBy(...resultsList, 'id')
+        let userResults = []
+        let firstUrl = createUrl(uid)
+        let pageResults = (await axios.get(firstUrl)).data
+        console.log(`found ${pageResults.items.length} items for ${u}`)
+        userResults.push(...pageResults.items)
+        while (pageResults.next) {
+          let nextUrl = createUrl(uid, pageResults.next)
+          let prevNextValue = pageResults.next
+          pageResults = (await axios.get(nextUrl)).data
+          console.log(`found ${pageResults.items.length} items for ${u}`)
+          userResults.push(...pageResults.items)
+          debugger
+          if (prevNextValue === pageResults.next) {
+            break
+          }
+        }
+        resultsList.push(userResults)
       } catch (e) {
         console.log('Error!!')
         debugger
@@ -57,6 +73,7 @@ router.get('/check', async (req, res) => {
       }
     }
     // resultsList = resultsList.map(x => x.items)
+    intersection = _.intersectionBy(...resultsList, 'id')
     res.json(intersection)
   } else {
     res.status(400).send({ error: 'You did not specify any users!' })
