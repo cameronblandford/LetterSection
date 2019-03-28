@@ -72,7 +72,10 @@
           </div>-->
           <div v-for="r in results" :key="r.id">
             <p class="lead">
-              <a :href="r.links[0].url" target="_blank">{{r.name}}</a>
+              <a :href="r.links[0].url" target="_blank">
+                {{r.name}}
+                <span class="text-muted">({{r.releaseYear}})</span>
+              </a>
             </p>
           </div>
           <div v-if="loading"></div>
@@ -131,14 +134,5 @@ button {
 }
 .results a {
   color: inherit;
-  display: inline-block;
-  width: 100%;
-}
-
-li {
-  list-style-type: none;
-}
-.results > p.lead {
-  width: 100%;
 }
 </style>
