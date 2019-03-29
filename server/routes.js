@@ -42,8 +42,20 @@ router.get('/check', async (req, res) => {
     for (let i in usernames) {
       let u = usernames[i]
       const headUrl = `https://letterboxd.com/${u}`
-      let headResults = await axios.head(headUrl)
-      let uid = headResults.headers['x-letterboxd-identifier']
+      let headResults
+      let uid
+      try {
+        headResults = await axios.head(headUrl)
+        uid = headResults.headers['x-letterboxd-identifier']
+      } catch (e) {
+        console.log(e.response.status)
+        if (e.response.status === 404) {
+          console.log(`FOUR OH FOUR`)
+          res.status(404).send({
+            apiError: e.response.data
+          })
+        }
+      }
       try {
         let userResults = []
         let firstUrl = createUrl(uid)
@@ -64,12 +76,14 @@ router.get('/check', async (req, res) => {
         resultsList.push(userResults)
       } catch (e) {
         console.log('Error!!')
-        debugger
         console.log(e.response.data)
-
-        res.status(400).send({
-          apiError: e.response.data
-        })
+        if (e.response.status === 404) {
+          console.log(`FOUR OH FOUR`)
+          res.status(404).send({
+            apiError: e.response.data
+          })
+        } else {
+        }
       }
     }
     // resultsList = resultsList.map(x => x.items)

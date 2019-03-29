@@ -54,6 +54,11 @@
             value="Get results"
           >
         </form>
+        <p class="text-muted text-center">
+          Powered by the
+          <a href="https://letterboxd.com">Letterboxd</a>
+          <a href="http://api-docs.letterboxd.com/">API</a>
+        </p>
       </div>
       <div class="col-md-6 col-lg-8" v-if="results.length > 0">
         <h1 class="ml-3">Results</h1>
@@ -78,7 +83,11 @@
               </a>
             </p>
           </div>
-          <div v-if="loading"></div>
+        </div>
+      </div>
+      <div class="col-md-6 col-lg-8" v-else>
+        <div v-if="userNotFound">
+          <p class="lead text-danger">One of these users could not be found. Please try again.</p>
         </div>
       </div>
     </div>
@@ -99,7 +108,8 @@ export default {
       thirdUsername: '',
       fourthUsername: '',
       results: [],
-      loading: false
+      loading: false,
+      userNotFound: false
     }
   },
   computed: {
@@ -118,10 +128,18 @@ export default {
     async search() {
       this.loading = true
       this.results = []
-      let results = await axios.get(`/api/check?q=${this.usernames}`)
-      console.log(results.data)
+      let results = []
+      this.userNotFound = false
+      try {
+        results = await axios.get(`/api/check?q=${this.usernames}`)
+        this.results = results.data
+      } catch (e) {
+        console.log(e)
+        if (e.response.status === 404) {
+          this.userNotFound = true
+        }
+      }
       this.loading = false
-      this.results = results.data
     }
   }
 }
